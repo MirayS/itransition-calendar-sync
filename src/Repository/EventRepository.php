@@ -18,4 +18,15 @@ class EventRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Event::class);
     }
+
+    public function findAllByCalendarId(int $calendarId)
+    {
+        return $this->createQueryBuilder('t')
+            ->andWhere('t.calendar = :val')
+            ->setParameter('val', $calendarId)
+            ->orderBy('t.id', 'ASC')
+            ->getQuery()
+            ->getArrayResult()
+            ;
+    }
 }

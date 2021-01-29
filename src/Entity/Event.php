@@ -5,6 +5,7 @@ namespace App\Entity;
 
 use App\Repository\EventRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=EventRepository::class)
@@ -15,6 +16,7 @@ class Event
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"show_calendar", "list_event"})
      */
     private ?int $id;
 
@@ -27,22 +29,31 @@ class Event
      * @ORM\ManyToOne(targetEntity=Calendar::class, inversedBy="events")
      * @ORM\JoinColumn(nullable=false)
      */
-    private Calendar $calendar;
+    private ?Calendar $calendar;
 
     /**
      * @ORM\Column(type="datetime")
+     * @Groups({"show_calendar", "list_event"})
      */
     private \DateTimeInterface $startTime;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime", nullable=true)
+     * @Groups({"show_calendar", "list_event"})
      */
-    private \DateTimeInterface  $endTime;
+    private ?\DateTimeInterface  $endTime;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"show_calendar", "list_event"})
      */
     private string $name;
+
+    /**
+     * @ORM\Column(type="boolean")
+     * @Groups({"show_calendar", "list_event"})
+     */
+    private bool $isAllDay;
 
     public function getId(): ?int
     {
@@ -90,7 +101,7 @@ class Event
         return $this->endTime;
     }
 
-    public function setEndTime(\DateTimeInterface  $endTime): self
+    public function setEndTime(?\DateTimeInterface  $endTime): self
     {
         $this->endTime = $endTime;
 
@@ -105,6 +116,18 @@ class Event
     public function setName(string $name): self
     {
         $this->name = $name;
+
+        return $this;
+    }
+
+    public function getIsAllDay(): ?bool
+    {
+        return $this->isAllDay;
+    }
+
+    public function setIsAllDay(bool $isAllDay): self
+    {
+        $this->isAllDay = $isAllDay;
 
         return $this;
     }
