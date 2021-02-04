@@ -1,48 +1,80 @@
 let windowObjectReference = null;
 let previousUrl = null;
+let tokens
 
-function initializeCalendarPage() {
+const initializeCalendarPage = () => {
+    loadCalendarList()
     initializeCalendar()
-    loadAllEvents()
 }
 
-function initializeCalendar() {
+const initializeCalendar = () => {
 
     let calendarEl = document.getElementById('calendar');
     calendar = new FullCalendar.Calendar(calendarEl, {
         themeSystem: 'bootstrap',
         initialView: 'dayGridMonth',
         height: 'auto',
-        contentHeight: 'auto'
+        contentHeight: '100%',
+        locale: 'ru',
+        events: {
+            url: `/api/events`,
+        },
+        headerToolbar: {
+            start: 'title',
+            center: 'dayGridMonth timeGridWeek',
+            end: 'today prev,next'
+        },
+        eventDidMount: function (info) {
+            if (!info.event.extendedProps || !info.event.extendedProps.description) {
+                console.log(info)
+                return
+            }
+            $(info.el).tooltip({
+                title: info.event.extendedProps.description,
+                placement: "top",
+                trigger: "hover",
+                container: "body"
+            });
+
+        },
     });
 
     calendar.render();
 }
 
-function loadAllEvents() {
-    for (let input of document.forms.calendars.getElementsByTagName("input")) {
-        if (!input.checked) {
-            continue;
+const loadCalendarList = () => {
+    $("#calendars").empty()
+    $.get(`/api/calendars`, (calendars) => {
+            for (let calendar of calendars) {
+                $("#calendars").append(getCalendarItem(calendar))
+            }
         }
-        loadEvent(input.value)
-    }
+    )
 }
 
-function loadEvent(calendarId) {
-    $.get(`/api/calendars/${calendarId}/events`, function (data) {
-        for (let item of data) {
-            addEventToCalendar(item.name, item.startTime, item.endTime, item.isAllDay)
-        }
+const getCalendarItem = (calendar) => {
+    return `
+        <div class="form-check calendar-item">
+            <input class="form-check-input" type="checkbox" value="${calendar.id}" onclick="updateCalendar(${calendar.id})"
+                   id="calendarCheckbox${calendar.id}" ${calendar.isShow ? "checked" : ""}>
+            <label class="form-check-label" for="calendarCheckbox${calendar.id}">
+                ${calendar.name}
+            </label>
+            <small class="sync-date">${formatDate(new Date(calendar.lastSyncDate))}</small>
+        </div>
+    `
+}
+
+const formatDate = (date) => {
+    const options = {year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric'};
+    return date.toLocaleDateString(window.navigator.language.slice(0, 2) !== "en", options)
+}
+
+const syncAllEvents = () => {
+    $.get("/api/calendars/sync", () => {
+        loadCalendarList()
+        calendar.getEventSources()[0].refetch()
     })
-}
-
-function addEventToCalendar(name, start, end = null, isAllDay = true) {
-    calendar.addEvent({
-        title: name,
-        start: start,
-        allDay: isAllDay,
-        end: end
-    });
 }
 
 const getWindowFeatures = () => {
@@ -53,11 +85,9 @@ const getWindowFeatures = () => {
     return `toolbar=no, menubar=no, width=600, height=700, top=${top}, left=${left}`
 }
 
-function addNewCalendar() {
-
-
+const getOauthPopup = () => {
     $.get("/api/google/url", url => {
-        window.removeEventListener('message', receiveMessage);
+        window.removeEventListener('message', oauthResultReceive);
         const strWindowFeatures = getWindowFeatures();
 
         if (windowObjectReference === null || windowObjectReference.closed) {
@@ -68,25 +98,53 @@ function addNewCalendar() {
         } else {
             windowObjectReference.focus();
         }
-        window.addEventListener('message', event => receiveMessage(event), false);
+        window.addEventListener('message', oauthResultReceive, false);
         previousUrl = url;
     })
-
-    // $('#addCalendarModal').modal()
 }
 
-const receiveMessage = event => {
-    // Do we trust the sender of this message? (might be
-    // different from what we originally opened, for example).
-    if (event.origin !== BASE_URL) {
+const oauthResultReceive = event => {
+    if (event.origin !== window.location.origin) {
         return;
     }
     const {data} = event;
-    // if we trust the sender and the source is our popup
-    if (data.source === 'lma-login-redirect') {
-        // get the URL params and redirect to our server to use Passport to auth/login
-        const {payload} = data;
-        const redirectUrl = `/auth/google/login${payload}`;
-        window.location.pathname = redirectUrl;
-    }
-};
+    tokens = data;
+    getGoogleCalendars()
+}
+
+const getGoogleCalendars = () => {
+    if (!tokens)
+        return
+
+    $.get("/api/google/calendars?accessToken=" + tokens.accessToken, result => {
+        console.log(result)
+        let select = $("#selectCalendar")
+        select.empty()
+        for (let calendar of result) {
+            select.append(`<option value="${calendar.id}">${calendar.name}</option>`)
+        }
+        $("#addCalendarModal").modal()
+    })
+}
+
+const addNewGoogleCalendar = () => {
+    $("#addCalendarModal").modal('hide')
+    let selectedCalendar = $("#selectCalendar option:selected")[0]
+    $.post("/api/google/new", {
+        "accessToken": tokens.accessToken,
+        "refreshToken": tokens.refreshToken,
+        "calendarId": $("#selectCalendar").val(),
+        "calendarName": selectedCalendar.text
+    }, () => {
+        loadCalendarList()
+        calendar.getEventSources()[0].refetch()
+    })
+
+}
+
+const updateCalendar = (calendarId) => {
+    $.get(`/api/calendars/${calendarId}/changeStatus`, (result) => {
+        $(`#calendarCheckbox${result.id}`).checked = result.isShow;
+        calendar.getEventSources()[0].refetch()
+    })
+}

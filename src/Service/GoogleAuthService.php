@@ -4,15 +4,15 @@ declare(strict_types=1);
 namespace App\Service;
 
 
+use App\Entity\AuthResult;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-class GoogleAuthService
+class GoogleAuthService implements AuthServiceInterface
 {
     private \Google_Client $googleClient;
 
     public function __construct(\Google_Client $googleClient, UrlGeneratorInterface $router)
     {
-
         $this->googleClient = $googleClient;
         $this->googleClient->addScope(\Google_Service_Calendar::CALENDAR_READONLY);
         $this->googleClient->addScope(\Google_Service_Calendar::CALENDAR_EVENTS_READONLY);
@@ -27,19 +27,31 @@ class GoogleAuthService
         return $this->googleClient->createAuthUrl();
     }
 
-    public function getTokens(string $authCode): array
+    public function getTokens(string $authCode): AuthResult
     {
-        return $this->googleClient->fetchAccessTokenWithAuthCode($authCode);
+        $this->googleClient->fetchAccessTokenWithAuthCode($authCode);
+        return new AuthResult($this->googleClient->getAccessToken()["access_token"], $this->googleClient->getRefreshToken());
     }
 
-    public function validateToken(string $accessToken): bool
+    public function isTokenValid(string $accessToken): bool
     {
         $this->googleClient->setAccessToken($accessToken);
         return $this->googleClient->isAccessTokenExpired();
     }
 
-    public function getNewAccessToken(string $refreshToken): array
+    public function getNewAccessToken(string $refreshToken): AuthResult
     {
-        return $this->googleClient->refreshToken($refreshToken);
+        $this->googleClient->refreshToken($refreshToken);
+        return new AuthResult($this->googleClient->getAccessToken()["access_token"], $this->googleClient->getRefreshToken());
+    }
+
+    public function getGoogleClient(): \Google_Client
+    {
+        return $this->googleClient;
+    }
+
+    public function setAccessToken(string $accessToken)
+    {
+        $this->googleClient->setAccessToken($accessToken);
     }
 }

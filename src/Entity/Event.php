@@ -41,7 +41,7 @@ class Event
      * @ORM\Column(type="datetime", nullable=true)
      * @Groups({"show_calendar", "list_event"})
      */
-    private ?\DateTimeInterface  $endTime;
+    private ?\DateTimeInterface $endTime;
 
     /**
      * @ORM\Column(type="string", length=255)
@@ -54,6 +54,22 @@ class Event
      * @Groups({"show_calendar", "list_event"})
      */
     private bool $isAllDay;
+
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $description;
+
+    public function __construct(string $name, string $eventId, Calendar $calendar, \DateTimeInterface $startTime, ?\DateTimeInterface $endTime = null, bool $isAllDay = true, string $description = "")
+    {
+        $this->name = $name;
+        $this->eventId = $eventId;
+        $this->calendar = $calendar;
+        $this->startTime = $startTime;
+        $this->endTime = $endTime;
+        $this->isAllDay = $isAllDay;
+        $this->description = $description;
+    }
 
     public function getId(): ?int
     {
@@ -101,7 +117,7 @@ class Event
         return $this->endTime;
     }
 
-    public function setEndTime(?\DateTimeInterface  $endTime): self
+    public function setEndTime(?\DateTimeInterface $endTime): self
     {
         $this->endTime = $endTime;
 
@@ -128,6 +144,18 @@ class Event
     public function setIsAllDay(bool $isAllDay): self
     {
         $this->isAllDay = $isAllDay;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
 
         return $this;
     }

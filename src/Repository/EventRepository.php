@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Repository;
 
@@ -19,14 +20,18 @@ class EventRepository extends ServiceEntityRepository
         parent::__construct($registry, Event::class);
     }
 
-    public function findAllByCalendarId(int $calendarId)
+    public function findAllInRange(\DateTime $min, \DateTime $max)
     {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.calendar = :val')
-            ->setParameter('val', $calendarId)
+        $qb = $this->createQueryBuilder('t');
+
+        return $qb
+            ->where($qb->expr()->between('t.startTime', ':min', ':max'))
+            ->join('t.calendar', 'c')
+            ->andWhere('c.isShow = 1')
+            ->setParameter('min', $min)
+            ->setParameter('max', $max)
             ->orderBy('t.id', 'ASC')
             ->getQuery()
-            ->getArrayResult()
-            ;
+            ->getArrayResult();
     }
 }

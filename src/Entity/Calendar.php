@@ -48,16 +48,32 @@ class Calendar
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private string $authToken;
+    private string $accessToken;
 
     /**
      * @ORM\OneToMany(targetEntity=Event::class, mappedBy="calendar", orphanRemoval=true)
      */
     private Collection $events;
 
-    public function __construct()
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $refreshToken;
+
+    /**
+     * @ORM\Column(type="json", nullable=true)
+     */
+    private $metaData = [];
+
+    public function __construct(string $calendarId, string $calendarName, string $accessToken, string $refreshToken)
     {
         $this->events = new ArrayCollection();
+        $this->calendarId = $calendarId;
+        $this->name = $calendarName;
+        $this->accessToken = $accessToken;
+        $this->refreshToken = $refreshToken;
+        $this->lastSyncDate = new \DateTime();
+        $this->isShow = true;
     }
 
     public function getId(): ?int
@@ -113,14 +129,14 @@ class Calendar
         return $this;
     }
 
-    public function getAuthToken(): ?string
+    public function getAccessToken(): ?string
     {
-        return $this->authToken;
+        return $this->accessToken;
     }
 
-    public function setAuthToken(string $authToken): self
+    public function setAccessToken(string $accessToken): self
     {
-        $this->authToken = $authToken;
+        $this->accessToken = $accessToken;
 
         return $this;
     }
@@ -151,6 +167,30 @@ class Calendar
                 $event->setCalendar(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getRefreshToken(): ?string
+    {
+        return $this->refreshToken;
+    }
+
+    public function setRefreshToken(string $refreshToken): self
+    {
+        $this->refreshToken = $refreshToken;
+
+        return $this;
+    }
+
+    public function getMetaData(): ?array
+    {
+        return $this->metaData;
+    }
+
+    public function setMetaData(?array $metaData): self
+    {
+        $this->metaData = $metaData;
 
         return $this;
     }
