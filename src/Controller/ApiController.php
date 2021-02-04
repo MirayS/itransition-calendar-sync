@@ -78,6 +78,21 @@ class ApiController extends AbstractController
     }
 
     /**
+     * @Route("/api/calendars/{id}/sync", name="api.calendar.sync")
+     */
+    public function syncCalendar(CalendarService $calendarService, int $id): Response
+    {
+        try {
+            $calendar = $calendarService->getCalendar($id);
+            $calendarService->syncCalendar($calendar);
+            return $this->json(null);
+        } catch (\Exception $exception) {
+            return $this->json($exception);
+        }
+
+    }
+
+    /**
      * @Route("/api/calendars/{id}/changeStatus", name="api.calendars.changeStatus")
      */
     public function changeCalendarStatus(SerializerInterface $serializer, CalendarService $calendarService, int $id): Response

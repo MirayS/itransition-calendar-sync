@@ -60,7 +60,7 @@ const getCalendarItem = (calendar) => {
             <label class="form-check-label" for="calendarCheckbox${calendar.id}">
                 ${calendar.name}
             </label>
-            <small class="sync-date">${formatDate(new Date(calendar.lastSyncDate))}</small>
+            <small class="sync-date">${formatDate(new Date(calendar.lastSyncDate))} <a onclick="syncEvent(${calendar.id}); return false;" href="#"><i class="fas fa-sync-alt"></i></a></small>
         </div>
     `
 }
@@ -72,6 +72,13 @@ const formatDate = (date) => {
 
 const syncAllEvents = () => {
     $.get("/api/calendars/sync", () => {
+        loadCalendarList()
+        calendar.getEventSources()[0].refetch()
+    })
+}
+
+const syncEvent = (calendarId) => {
+    $.get(`/api/calendars/${calendarId}/sync`, () => {
         loadCalendarList()
         calendar.getEventSources()[0].refetch()
     })
