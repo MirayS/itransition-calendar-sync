@@ -1,6 +1,7 @@
 let windowObjectReference = null;
 let previousUrl = null;
 let tokens
+let calendar
 
 const initializeCalendarPage = () => {
     loadCalendarList()
