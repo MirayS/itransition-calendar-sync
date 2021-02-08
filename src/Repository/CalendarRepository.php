@@ -19,4 +19,15 @@ class CalendarRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Calendar::class);
     }
+
+    public function findCalendarByNotificationChannelId(string $channelId)
+    {
+        $qb = $this->createQueryBuilder('t');
+
+        return $qb
+            ->where("JSON_VALUE(t.metaData, '$.notificationId') = :channelId")
+            ->setParameter('channelId', $channelId)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

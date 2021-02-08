@@ -8,15 +8,19 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class GoogleCalendarParser implements CalendarParserInterface
 {
+    private const CANCEL_STATUS = "cancelled";
+
     private GoogleAuthService $googleAuthService;
     private EntityManagerInterface $entityManager;
     private EventService $eventService;
+    private GoogleNotificationService $googleNotificationService;
 
-    public function __construct(GoogleAuthService $googleAuthService, EntityManagerInterface $entityManager, EventService $eventService)
+    public function __construct(GoogleAuthService $googleAuthService, EntityManagerInterface $entityManager, EventService $eventService, GoogleNotificationService $googleNotificationService)
     {
         $this->googleAuthService = $googleAuthService;
         $this->entityManager = $entityManager;
         $this->eventService = $eventService;
+        $this->googleNotificationService = $googleNotificationService;
     }
 
     public function parseEvents(Calendar $calendar)
@@ -27,12 +31,28 @@ class GoogleCalendarParser implements CalendarParserInterface
         do {
             $result = $googleCalendarService->getEvents($calendar->getCalendarId(), $nextPageToken, isset($calendar->getMetaData()["lastSyncToken"]) ? $calendar->getMetaData()["lastSyncToken"] : "");
             foreach ($result["events"] as $event) {
-                $eventModel = $this->eventService->getOrCreateEvent($event["id"], $calendar, $event["name"] ?? "", new \DateTime($event["start"]), new \DateTime($event["end"]), $event["isAllDay"], $event["description"]);
+                $eventModel = $this->eventService->getOrCreateEvent($event["id"],
+                    $calendar,
+                    $event["name"] ?? "",
+                    $event["start"] == null ? new \DateTime('now') : new \DateTime($event["start"]),
+                    $event["end"] == null ? new \DateTime('now') : new \DateTime($event["end"]),
+                    $event["isAllDay"] ?? false,
+                    $event["description"]
+                );
+                if ($event["status"] == self::CANCEL_STATUS) {
+                    $this->entityManager->remove($eventModel);
+                    continue;
+                }
                 $this->entityManager->persist($eventModel);
             }
             $nextPageToken = $result["nextPageToken"];
         } while ((!isset($result["syncToken"])));
-        $calendar->setMetaData(["lastSyncToken" => $result["syncToken"]]);
+        $metaData = $calendar->getMetaData();
+        $metaData["lastSyncToken"] = $result["syncToken"];
+        if (isset($metaData["notificationExpirationDate"]) && $metaData["notificationExpirationDate"] < new \DateTime('now')) {
+            $this->googleNotificationService->startReceiveNotification($calendar);
+        }
+        $calendar->setMetaData($metaData);
         $calendar->setLastSyncDate(new \DateTime('now'));
         $this->entityManager->persist($calendar);
         $this->entityManager->flush();

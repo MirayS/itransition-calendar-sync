@@ -37,16 +37,16 @@ class GoogleCalendarService implements CalendarServiceInterface
 
         $result = $this->googleCalendarService->events->listEvents($calendarId, $params);
         foreach ($result->getItems() as $item) {
-            if ($item->getStart() == null || $item->getEnd() == null)
-                continue;
 
             $events[] = [
                 "name" => $item->getSummary(),
                 "id" => $item->getId(),
-                "start" => $item->getStart()->getDateTime() ?? $item->getStart()->getDate(),
-                "end" => $item->getEnd()->getDateTime() ?? $item->getEnd()->getDate(),
-                "isAllDay" => $item->getStart()->getDate() != null,
-                "description" => $item->getDescription() ?? ""
+                "description" => $item->getDescription() ?? "",
+                "status" => $item->getStatus(),
+
+                "start" => $item->getStart() == null ? null : $item->getStart()->getDateTime() ?? $item->getStart()->getDate(),
+                "end" => $item->getEnd() == null ? null : $item->getEnd()->getDateTime() ?? $item->getEnd()->getDate(),
+                "isAllDay" => $item->getStart() == null ? null : $item->getStart()->getDate() != null,
             ];
         }
         return [
@@ -55,4 +55,6 @@ class GoogleCalendarService implements CalendarServiceInterface
             "syncToken" => $result->getNextSyncToken()
         ];
     }
+
+
 }

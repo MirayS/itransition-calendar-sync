@@ -27,7 +27,6 @@ const initializeCalendar = () => {
         },
         eventDidMount: function (info) {
             if (!info.event.extendedProps || !info.event.extendedProps.description) {
-                console.log(info)
                 return
             }
             $(info.el).tooltip({
@@ -125,7 +124,6 @@ const getGoogleCalendars = () => {
         return
 
     $.get("/api/google/calendars?accessToken=" + tokens.accessToken, result => {
-        console.log(result)
         let select = $("#selectCalendar")
         select.empty()
         for (let calendar of result) {

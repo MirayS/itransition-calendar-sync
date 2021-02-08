@@ -51,6 +51,11 @@ class CalendarService
         return $this->calendarRepository->find($id);
     }
 
+    public function getCalendarByNotificationId(string $notificationId): ?Calendar
+    {
+        return $this->calendarRepository->findCalendarByNotificationChannelId($notificationId);
+    }
+
     public function syncAllCalendars()
     {
         $calendars = $this->getAllCalendars();
