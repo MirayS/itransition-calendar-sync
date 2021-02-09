@@ -24,7 +24,8 @@ class GoogleNotificationService
 
     public function startReceiveNotification(Calendar $calendar)
     {
-        if (isset($metaData["notificationId"], $metaData["notificationResourceId"], $metaData["notificationExpirationDate"]) && $metaData["notificationExpirationDate"] >= new \DateTime('now')) {
+        $metaData = $calendar->getMetaData();
+        if (isset($metaData["notificationId"], $metaData["notificationResourceId"], $metaData["notificationExpirationDate"]) && new \DateTime($metaData["notificationExpirationDate"]) >= new \DateTime('now')) {
             $this->stopReceiveNotification($calendar);
         }
         $params = $this->getRequestModel();
@@ -60,7 +61,7 @@ class GoogleNotificationService
     private function updateCalendarModel(Calendar $calendar, \Google_Service_Calendar_Channel $calendarChannel)
     {
         $metaData = $calendar->getMetaData();
-        $metaData["notificationExpirationDate"] = new \DateTime(date("d.m.Y H:i:s", $calendarChannel->getExpiration() / 1000));
+        $metaData["notificationExpirationDate"] = date("Y-m-d H:i:s", $calendarChannel->getExpiration() / 1000);
         $metaData["notificationId"] = $calendarChannel->getId();
         $metaData["notificationResourceId"] = $calendarChannel->getResourceId();
         $calendar->setMetaData($metaData);

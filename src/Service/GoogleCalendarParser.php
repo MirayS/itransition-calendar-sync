@@ -49,7 +49,7 @@ class GoogleCalendarParser implements CalendarParserInterface
         } while ((!isset($result["syncToken"])));
         $metaData = $calendar->getMetaData();
         $metaData["lastSyncToken"] = $result["syncToken"];
-        if (isset($metaData["notificationExpirationDate"]) && $metaData["notificationExpirationDate"] < new \DateTime('now')) {
+        if (isset($metaData["notificationExpirationDate"]) && new \DateTime($metaData["notificationExpirationDate"]) < new \DateTime('now')) {
             $this->googleNotificationService->startReceiveNotification($calendar);
         }
         $calendar->setMetaData($metaData);
