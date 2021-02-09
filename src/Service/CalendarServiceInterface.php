@@ -4,9 +4,11 @@ declare(strict_types=1);
 namespace App\Service;
 
 
+use App\Entity\Calendar;
+
 interface CalendarServiceInterface
 {
-    public function getCalendars(): array;
+    public function getCalendars(string $accessToken): array;
 
-    public function getEvents(string $calendarId, ?string $pageToken, ?string $lastSyncToken): array;
+    public function parseEvents(Calendar $calendar);
 }

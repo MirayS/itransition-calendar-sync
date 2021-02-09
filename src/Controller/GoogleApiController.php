@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 
-use App\Entity\Calendar;
 use App\Service\CalendarService;
 use App\Service\GoogleAuthService;
 use App\Service\GoogleCalendarService;
@@ -38,14 +37,12 @@ class GoogleApiController extends AbstractController
     /**
      * @Route("/api/google/calendars", name="api.google.calendars")
      */
-    public function getGoogleCalendars(GoogleAuthService $googleAuthService, Request $request): Response
+    public function getGoogleCalendars(GoogleCalendarService $googleCalendarService, Request $request): Response
     {
         $accessToken = $request->query->get("accessToken");
         if ($accessToken == null)
             $this->createNotFoundException();
-        $googleAuthService->setAccessToken($accessToken);
-        $googleCalendarService = new GoogleCalendarService($googleAuthService->getGoogleClient());
-        return $this->json($googleCalendarService->getCalendars());
+        return $this->json($googleCalendarService->getCalendars($accessToken));
     }
 
     /**

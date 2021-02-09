@@ -14,15 +14,15 @@ class CalendarService
     private CalendarRepository $calendarRepository;
     private EventRepository $eventRepository;
     private EntityManagerInterface $entityManager;
-    private GoogleCalendarParser $googleCalendarParser;
+    private GoogleCalendarService $googleCalendarService;
 
-    public function __construct(CalendarRepository $calendarRepository, EventRepository $eventRepository, EntityManagerInterface $entityManager, GoogleCalendarParser $googleCalendarParser)
+    public function __construct(CalendarRepository $calendarRepository, EventRepository $eventRepository, EntityManagerInterface $entityManager, GoogleCalendarService $googleCalendarService)
     {
 
         $this->calendarRepository = $calendarRepository;
         $this->eventRepository = $eventRepository;
         $this->entityManager = $entityManager;
-        $this->googleCalendarParser = $googleCalendarParser;
+        $this->googleCalendarService = $googleCalendarService;
     }
 
     public function getAllCalendars(): array
@@ -66,7 +66,7 @@ class CalendarService
 
     public function syncCalendar(Calendar $calendar)
     {
-        $this->googleCalendarParser->parseEvents($calendar);
+        $this->googleCalendarService->parseEvents($calendar);
     }
 
     public function updateCalendar(Calendar $calendar)
