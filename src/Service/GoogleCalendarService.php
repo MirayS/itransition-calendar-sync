@@ -88,7 +88,7 @@ class GoogleCalendarService implements CalendarServiceInterface
         }
     }
 
-    private function getEventDateTime(\Google_Service_Calendar_EventDateTime $eventDateTime): \DateTime
+    private function getEventDateTime(?\Google_Service_Calendar_EventDateTime $eventDateTime): \DateTime
     {
         if ($eventDateTime == null) {
             return new \DateTime('now');
