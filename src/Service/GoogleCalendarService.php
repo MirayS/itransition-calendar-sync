@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
@@ -8,7 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class GoogleCalendarService implements CalendarServiceInterface
 {
-    private const CANCEL_STATUS = "cancelled";
+    private const CANCEL_STATUS = 'cancelled';
 
     private GoogleAuthService $googleAuthService;
     private EntityManagerInterface $entityManager;
@@ -23,18 +24,18 @@ class GoogleCalendarService implements CalendarServiceInterface
         $this->googleNotificationService = $googleNotificationService;
     }
 
-    public function parseEvents(Calendar $calendar)
+    public function parseEvents(Calendar $calendar): void
     {
         $this->updateTokens($calendar);
-        $nextPageToken = "";
+        $nextPageToken = '';
         $result = null;
         do {
-            $result = $this->getEvents($calendar->getCalendarId(), $nextPageToken, isset($calendar->getMetaData()["lastSyncToken"]) ? $calendar->getMetaData()["lastSyncToken"] : "");
+            $result = $this->getEvents($calendar->getCalendarId(), $nextPageToken, isset($calendar->getMetaData()['lastSyncToken']) ? $calendar->getMetaData()['lastSyncToken'] : '');
             foreach ($result->getItems() as $event) {
                 $this->parseEvent($calendar, $event);
             }
             $nextPageToken = $result->getNextPageToken();
-        } while ($result->getNextSyncToken() == null);
+        } while (null == $result->getNextSyncToken());
         $this->fillMetaData($calendar, [
             'lastSyncToken' => $result->getNextSyncToken(),
         ]);
@@ -51,8 +52,8 @@ class GoogleCalendarService implements CalendarServiceInterface
         $googleCalendarService = new \Google_Service_Calendar($this->googleAuthService->getGoogleClient());
         foreach ($googleCalendarService->calendarList->listCalendarList()->getItems() as $item) {
             $result[] = [
-                "id" => $item->getId(),
-                "name" => $item->getSummary(),
+                'id' => $item->getId(),
+                'name' => $item->getSummary(),
             ];
         }
 
@@ -62,26 +63,29 @@ class GoogleCalendarService implements CalendarServiceInterface
     private function getEvents(string $calendarId, ?string $pageToken, ?string $lastSyncToken): \Google_Service_Calendar_Events
     {
         $params = [];
-        if ($pageToken != null)
-            $params["pageToken"] = $pageToken;
-        if ($lastSyncToken != null)
-            $params["syncToken"] = $lastSyncToken;
+        if (null != $pageToken) {
+            $params['pageToken'] = $pageToken;
+        }
+        if (null != $lastSyncToken) {
+            $params['syncToken'] = $lastSyncToken;
+        }
 
         $googleCalendarService = new \Google_Service_Calendar($this->googleAuthService->getGoogleClient());
+
         return $googleCalendarService->events->listEvents($calendarId, $params);
     }
 
-    private function parseEvent(Calendar $calendar, \Google_Service_Calendar_Event $googleEvent)
+    private function parseEvent(Calendar $calendar, \Google_Service_Calendar_Event $googleEvent): void
     {
         $eventModel = $this->eventService->getOrCreateEvent($googleEvent->getId(),
             $calendar,
-            $googleEvent->getSummary() ?? "",
+            $googleEvent->getSummary() ?? '',
             $this->getEventDateTime($googleEvent->getStart()),
             $this->getEventDateTime($googleEvent->getEnd()),
             $this->isAllDayEvent($googleEvent),
-            $googleEvent->getDescription() ?? ""
+            $googleEvent->getDescription() ?? ''
         );
-        if ($googleEvent->getStatus() == self::CANCEL_STATUS) {
+        if (self::CANCEL_STATUS == $googleEvent->getStatus()) {
             $this->entityManager->remove($eventModel);
         } else {
             $this->entityManager->persist($eventModel);
@@ -90,24 +94,26 @@ class GoogleCalendarService implements CalendarServiceInterface
 
     private function getEventDateTime(?\Google_Service_Calendar_EventDateTime $eventDateTime): \DateTime
     {
-        if ($eventDateTime == null) {
+        if (null == $eventDateTime) {
             return new \DateTime('now');
         }
-        if ($eventDateTime->getDateTime() == null) {
+        if (null == $eventDateTime->getDateTime()) {
             return new \DateTime($eventDateTime->getDate());
         }
+
         return new \DateTime($eventDateTime->getDateTime());
     }
 
     private function isAllDayEvent(\Google_Service_Calendar_Event $googleEvent): bool
     {
-        if ($googleEvent->getStart() == null)
+        if (null == $googleEvent->getStart()) {
             return false;
+        }
 
-        return $googleEvent->getStart()->getDateTime() == null;
+        return null == $googleEvent->getStart()->getDateTime();
     }
 
-    private function updateTokens(Calendar $calendar)
+    private function updateTokens(Calendar $calendar): void
     {
         $this->googleAuthService->setAccessToken($calendar->getAccessToken());
         $newTokens = $this->googleAuthService->getNewAccessToken($calendar->getRefreshToken());
@@ -115,7 +121,7 @@ class GoogleCalendarService implements CalendarServiceInterface
         $calendar->setRefreshToken($newTokens->getRefreshToken());
     }
 
-    private function fillMetaData(Calendar $calendar, array $newMetaData)
+    private function fillMetaData(Calendar $calendar, array $newMetaData): void
     {
         $metaData = $calendar->getMetaData();
         foreach ($newMetaData as $key => $value) {
@@ -124,9 +130,10 @@ class GoogleCalendarService implements CalendarServiceInterface
         $calendar->setMetaData($metaData);
     }
 
-    private function checkNotificationSubscribe(Calendar $calendar) {
+    private function checkNotificationSubscribe(Calendar $calendar): void
+    {
         $metaData = $calendar->getMetaData();
-        if (isset($metaData["notificationExpirationDate"]) && new \DateTime($metaData["notificationExpirationDate"]) < new \DateTime('now')) {
+        if (isset($metaData['notificationExpirationDate']) && new \DateTime($metaData['notificationExpirationDate']) < new \DateTime('now')) {
             $this->googleNotificationService->startReceiveNotification($calendar);
         }
     }

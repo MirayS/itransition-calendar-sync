@@ -11,9 +11,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class SyncCalendarsCommand extends Command
 {
     protected static $defaultName = 'app:sync-calendars';
-    /**
-     * @var CalendarService
-     */
+
     private CalendarService $calendarService;
 
     public function __construct(CalendarService $calendarService, string $name = null)
@@ -22,7 +20,7 @@ class SyncCalendarsCommand extends Command
         $this->calendarService = $calendarService;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Sync all calendars')

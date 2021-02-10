@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
@@ -58,12 +59,12 @@ class Calendar
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $refreshToken;
+    private string $refreshToken;
 
     /**
      * @ORM\Column(type="json", nullable=true)
      */
-    private $metaData = [];
+    private array $metaData = [];
 
     public function __construct(string $calendarId, string $calendarName, string $accessToken, string $refreshToken)
     {
@@ -188,7 +189,7 @@ class Calendar
         return $this->metaData;
     }
 
-    public function setMetaData(?array $metaData): self
+    public function setMetaData(array $metaData): self
     {
         $this->metaData = $metaData;
 

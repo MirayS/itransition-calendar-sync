@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
-
 
 use App\Entity\Calendar;
 use App\Repository\CalendarRepository;
@@ -18,7 +18,6 @@ class CalendarService
 
     public function __construct(CalendarRepository $calendarRepository, EventRepository $eventRepository, EntityManagerInterface $entityManager, GoogleCalendarService $googleCalendarService)
     {
-
         $this->calendarRepository = $calendarRepository;
         $this->eventRepository = $eventRepository;
         $this->entityManager = $entityManager;
@@ -32,8 +31,8 @@ class CalendarService
 
     public function getOrCreateCalendar(string $calendarId, string $calendarName, string $accessToken, string $refreshToken): Calendar
     {
-        $calendar = $this->calendarRepository->findOneBy(["calendarId" => $calendarId]);
-        if ($calendar == null) {
+        $calendar = $this->calendarRepository->findOneBy(['calendarId' => $calendarId]);
+        if (null == $calendar) {
             $calendar = new Calendar($calendarId, $calendarName, $accessToken, $refreshToken);
         } else {
             $calendar->setName($calendarName);
@@ -46,17 +45,17 @@ class CalendarService
         return $calendar;
     }
 
-    public function getCalendar(int $id): Calendar
+    public function getCalendar(int $id): ?Calendar
     {
         return $this->calendarRepository->find($id);
     }
 
     public function getCalendarByNotificationId(string $notificationId): ?Calendar
     {
-        return $this->calendarRepository->findCalendarByNotificationChannelId($notificationId);
+        return $this->calendarRepository->findByNotificationChannelId($notificationId);
     }
 
-    public function syncAllCalendars()
+    public function syncAllCalendars(): void
     {
         $calendars = $this->getAllCalendars();
         foreach ($calendars as $calendar) {
@@ -64,12 +63,12 @@ class CalendarService
         }
     }
 
-    public function syncCalendar(Calendar $calendar)
+    public function syncCalendar(Calendar $calendar): void
     {
         $this->googleCalendarService->parseEvents($calendar);
     }
 
-    public function updateCalendar(Calendar $calendar)
+    public function updateCalendar(Calendar $calendar): void
     {
         $this->entityManager->persist($calendar);
         $this->entityManager->flush();

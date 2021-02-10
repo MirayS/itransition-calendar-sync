@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
-
 
 use App\Entity\Calendar;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,10 +22,10 @@ class GoogleNotificationService
         $this->entityManager = $entityManager;
     }
 
-    public function startReceiveNotification(Calendar $calendar)
+    public function startReceiveNotification(Calendar $calendar): void
     {
         $metaData = $calendar->getMetaData();
-        if (isset($metaData["notificationId"], $metaData["notificationResourceId"], $metaData["notificationExpirationDate"]) && new \DateTime($metaData["notificationExpirationDate"]) >= new \DateTime('now')) {
+        if (isset($metaData['notificationId'], $metaData['notificationResourceId'], $metaData['notificationExpirationDate']) && new \DateTime($metaData['notificationExpirationDate']) >= new \DateTime('now')) {
             $this->stopReceiveNotification($calendar);
         }
         $params = $this->getRequestModel();
@@ -37,42 +37,44 @@ class GoogleNotificationService
         $this->entityManager->flush();
     }
 
-    public function stopReceiveNotification(Calendar $calendar)
+    public function stopReceiveNotification(Calendar $calendar): void
     {
         $metaData = $calendar->getMetaData();
 
-        if (!isset($metaData["notificationId"], $metaData["notificationResourceId"], $metaData["notificationExpirationDate"]))
+        if (!isset($metaData['notificationId'], $metaData['notificationResourceId'], $metaData['notificationExpirationDate'])) {
             return;
+        }
 
         $this->updateTokens($calendar);
         $googleCalendarService = $this->getGoogleCalendarService($this->googleAuthService->getGoogleClient());
         $params = new \Google_Service_Calendar_Channel();
-        $params->setId($metaData["notificationId"]);
-        $params->setResourceId($metaData["notificationResourceId"]);
+        $params->setId($metaData['notificationId']);
+        $params->setResourceId($metaData['notificationResourceId']);
         $googleCalendarService->channels->stop($params);
-        $metaData["notificationId"] = null;
-        $metaData["notificationExpirationDate"] = null;
-        $metaData["notificationResourceId"] = null;
+        $metaData['notificationId'] = null;
+        $metaData['notificationExpirationDate'] = null;
+        $metaData['notificationResourceId'] = null;
         $calendar->setMetaData($metaData);
         $this->entityManager->persist($calendar);
         $this->entityManager->flush();
     }
 
-    private function updateCalendarModel(Calendar $calendar, \Google_Service_Calendar_Channel $calendarChannel)
+    private function updateCalendarModel(Calendar $calendar, \Google_Service_Calendar_Channel $calendarChannel): void
     {
         $metaData = $calendar->getMetaData();
-        $metaData["notificationExpirationDate"] = date("Y-m-d H:i:s", $calendarChannel->getExpiration() / 1000);
-        $metaData["notificationId"] = $calendarChannel->getId();
-        $metaData["notificationResourceId"] = $calendarChannel->getResourceId();
+        $metaData['notificationExpirationDate'] = date('Y-m-d H:i:s', $calendarChannel->getExpiration() / 1000);
+        $metaData['notificationId'] = $calendarChannel->getId();
+        $metaData['notificationResourceId'] = $calendarChannel->getResourceId();
         $calendar->setMetaData($metaData);
     }
 
     private function getRequestModel(): \Google_Service_Calendar_Channel
     {
         $params = new \Google_Service_Calendar_Channel();
-        $params->setAddress($this->urlGenerator->generate("api.google.notification", [], UrlGeneratorInterface::ABSOLUTE_URL));
-        $params->setType("web_hook");
+        $params->setAddress($this->urlGenerator->generate('api.google.notification', [], UrlGeneratorInterface::ABSOLUTE_URL));
+        $params->setType('web_hook');
         $params->setId(Uuid::v4()->toRfc4122());
+
         return $params;
     }
 
@@ -81,7 +83,7 @@ class GoogleNotificationService
         return new \Google_Service_Calendar($googleClient);
     }
 
-    private function updateTokens(Calendar $calendar)
+    private function updateTokens(Calendar $calendar): void
     {
         $this->googleAuthService->setAccessToken($calendar->getAccessToken());
         $newTokens = $this->googleAuthService->getNewAccessToken($calendar->getRefreshToken());

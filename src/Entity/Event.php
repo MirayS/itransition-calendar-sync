@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Entity;
@@ -58,9 +59,9 @@ class Event
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $description;
+    private string $description;
 
-    public function __construct(string $name, string $eventId, Calendar $calendar, \DateTimeInterface $startTime, ?\DateTimeInterface $endTime = null, bool $isAllDay = true, string $description = "")
+    public function __construct(string $name, string $eventId, Calendar $calendar, \DateTimeInterface $startTime, ?\DateTimeInterface $endTime = null, bool $isAllDay = true, string $description = '')
     {
         $this->name = $name;
         $this->eventId = $eventId;

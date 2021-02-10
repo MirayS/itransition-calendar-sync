@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Repository;
@@ -20,7 +21,7 @@ class EventRepository extends ServiceEntityRepository
         parent::__construct($registry, Event::class);
     }
 
-    public function findAllInRange(\DateTime $min, \DateTime $max)
+    public function findAllInRange(\DateTime $min, \DateTime $max): ?array
     {
         $qb = $this->createQueryBuilder('t');
 

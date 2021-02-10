@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Service;
-
 
 use App\Entity\Calendar;
 use App\Entity\Event;
@@ -19,8 +19,8 @@ class EventService
 
     public function getOrCreateEvent(string $eventId, Calendar $calendar, string $name, \DateTime $start, \DateTime $end, bool $isAllDay, string $description): Event
     {
-        $eventModel = $this->eventRepository->findOneBy(["eventId" => $eventId]);
-        if ($eventModel != null) {
+        $eventModel = $this->eventRepository->findOneBy(['eventId' => $eventId]);
+        if (null != $eventModel) {
             $eventModel->setName($name);
             $eventModel->setStartTime($start);
             $eventModel->setEndTime($end);
@@ -33,7 +33,7 @@ class EventService
         return $eventModel;
     }
 
-    public function getAllEnabledEventsInRange(\DateTime $start, \DateTime $end)
+    public function getAllEnabledEventsInRange(\DateTime $start, \DateTime $end): ?array
     {
         return $this->eventRepository->findAllInRange($start, $end);
     }

@@ -204,6 +204,24 @@
     "phpseclib/phpseclib": {
         "version": "3.0.4"
     },
+    "phpstan/extension-installer": {
+        "version": "1.1.0"
+    },
+    "phpstan/phpstan": {
+        "version": "0.12.74"
+    },
+    "phpstan/phpstan-doctrine": {
+        "version": "0.12.31"
+    },
+    "phpstan/phpstan-phpunit": {
+        "version": "0.12.17"
+    },
+    "phpstan/phpstan-symfony": {
+        "version": "0.12.16"
+    },
+    "phpstan/phpstan-webmozart-assert": {
+        "version": "0.12.12"
+    },
     "psr/cache": {
         "version": "1.0.1"
     },

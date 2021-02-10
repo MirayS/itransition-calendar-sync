@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Repository;
@@ -20,7 +21,7 @@ class CalendarRepository extends ServiceEntityRepository
         parent::__construct($registry, Calendar::class);
     }
 
-    public function findCalendarByNotificationChannelId(string $channelId)
+    public function findByNotificationChannelId(string $channelId): ?Calendar
     {
         $qb = $this->createQueryBuilder('t');
 

@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
-
 
 use App\Service\CalendarService;
 use App\Service\GoogleAuthService;
@@ -20,9 +20,10 @@ class GoogleApiController extends AbstractController
      */
     public function googleAuth(GoogleAuthService $googleAuthService, Request $request): Response
     {
-        $code = $request->query->get("code");
-        return $this->render("api/oauth.html.twig", [
-            "tokens" => $googleAuthService->getTokens($code)
+        $code = $request->query->get('code');
+
+        return $this->render('api/oauth.html.twig', [
+            'tokens' => $googleAuthService->getTokens($code),
         ]);
     }
 
@@ -39,9 +40,11 @@ class GoogleApiController extends AbstractController
      */
     public function getGoogleCalendars(GoogleCalendarService $googleCalendarService, Request $request): Response
     {
-        $accessToken = $request->query->get("accessToken");
-        if ($accessToken == null)
+        $accessToken = $request->query->get('accessToken');
+        if (null == $accessToken) {
             $this->createNotFoundException();
+        }
+
         return $this->json($googleCalendarService->getCalendars($accessToken));
     }
 
@@ -50,10 +53,10 @@ class GoogleApiController extends AbstractController
      */
     public function addNewGoogleCalendar(CalendarService $calendarService, Request $request): Response
     {
-        $calendarId = $request->request->get("calendarId");
-        $calendarName = $request->request->get("calendarName");
-        $accessToken = $request->request->get("accessToken");
-        $refreshToken = $request->request->get("refreshToken");
+        $calendarId = $request->request->get('calendarId');
+        $calendarName = $request->request->get('calendarName');
+        $accessToken = $request->request->get('accessToken');
+        $refreshToken = $request->request->get('refreshToken');
 
         $calendar = $calendarService->getOrCreateCalendar($calendarId, $calendarName, $accessToken, $refreshToken);
         $calendarService->syncCalendar($calendar);
@@ -64,11 +67,11 @@ class GoogleApiController extends AbstractController
     /**
      * @Route("/api/google/notification", name="api.google.notification")
      */
-    public function notificationGoogleCalendar(CalendarService $calendarService, Request $request) : Response
+    public function notificationGoogleCalendar(CalendarService $calendarService, Request $request): Response
     {
-        $notificationId = $request->headers->get("X-Goog-Channel-Id");
+        $notificationId = $request->headers->get('X-Goog-Channel-Id');
         $calendar = $calendarService->getCalendarByNotificationId($notificationId);
-        if ($calendar != null) {
+        if (null != $calendar) {
             $calendarService->syncCalendar($calendar);
         }
 
@@ -86,8 +89,6 @@ class GoogleApiController extends AbstractController
         return $this->json(null);
     }
 
-
-
     /**
      * @Route("/api/google/notification/{id}/stop", name="api.google.notification.stop")
      */
@@ -98,5 +99,4 @@ class GoogleApiController extends AbstractController
 
         return $this->json(null);
     }
-
 }

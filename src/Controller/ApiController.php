@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controller;
@@ -19,19 +20,18 @@ class ApiController extends AbstractController
      */
     public function getEvents(SerializerInterface $serializer, EventService $eventService, Request $request): Response
     {
-        $minDate = $request->get('start') != null ? new \DateTime($request->get('start')) : new \DateTime('first day of this month');
-        $maxDate = $request->get('end') != null ? new \DateTime($request->get('end')) : new \DateTime('last day of this month');
+        $minDate = null != $request->get('start') ? new \DateTime($request->get('start')) : new \DateTime('first day of this month');
+        $maxDate = null != $request->get('end') ? new \DateTime($request->get('end')) : new \DateTime('last day of this month');
 
         $func = function ($item) {
             return [
-                "title" => $item["name"],
-                "start" => $item["startTime"],
-                "end" => $item["endTime"],
-                "allDay" => $item["isAllDay"],
-                "description" => $item['description']
+                'title' => $item['name'],
+                'start' => $item['startTime'],
+                'end' => $item['endTime'],
+                'allDay' => $item['isAllDay'],
+                'description' => $item['description'],
             ];
         };
-
 
         $result = array_map($func, $eventService->getAllEnabledEventsInRange($minDate, $maxDate));
         $result = $serializer->serialize(
@@ -60,6 +60,7 @@ class ApiController extends AbstractController
         );
         $response = new JsonResponse($result, 200, [], true);
         $response->setContentSafe();
+
         return $response;
     }
 
@@ -70,11 +71,11 @@ class ApiController extends AbstractController
     {
         try {
             $calendarService->syncAllCalendars();
+
             return $this->json(null);
         } catch (\Exception $exception) {
             return $this->json($exception);
         }
-
     }
 
     /**
@@ -85,11 +86,11 @@ class ApiController extends AbstractController
         try {
             $calendar = $calendarService->getCalendar($id);
             $calendarService->syncCalendar($calendar);
+
             return $this->json(null);
         } catch (\Exception $exception) {
             return $this->json($exception);
         }
-
     }
 
     /**
@@ -108,6 +109,7 @@ class ApiController extends AbstractController
         );
         $response = new JsonResponse($result, 200, [], true);
         $response->setContentSafe();
+
         return $response;
     }
 }
