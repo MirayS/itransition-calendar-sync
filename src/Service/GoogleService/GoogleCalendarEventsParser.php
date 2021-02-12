@@ -36,6 +36,7 @@ class GoogleCalendarEventsParser
             foreach ($result->getItems() as $event) {
                 $this->parseEvent($calendar, $event);
             }
+
             $nextPageToken = $result->getNextPageToken();
         }
         $nextSyncToken = null == $result ? null : $result->getNextSyncToken();
