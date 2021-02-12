@@ -13,6 +13,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method Event|null findOneBy(array $criteria, array $orderBy = null)
  * @method Event[]    findAll()
  * @method Event[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<Event>
  */
 class EventRepository extends ServiceEntityRepository
 {
@@ -21,7 +22,10 @@ class EventRepository extends ServiceEntityRepository
         parent::__construct($registry, Event::class);
     }
 
-    public function findAllInRange(\DateTime $min, \DateTime $max): ?array
+    /**
+     * @return Event[]|null
+     */
+    public function findAllInDateTimeRange(\DateTime $start, \DateTime $end): ?array
     {
         $qb = $this->createQueryBuilder('t');
 
@@ -29,10 +33,10 @@ class EventRepository extends ServiceEntityRepository
             ->where($qb->expr()->between('t.startTime', ':min', ':max'))
             ->join('t.calendar', 'c')
             ->andWhere('c.isShow = 1')
-            ->setParameter('min', $min)
-            ->setParameter('max', $max)
+            ->setParameter('min', $start)
+            ->setParameter('max', $end)
             ->orderBy('t.id', 'ASC')
             ->getQuery()
-            ->getArrayResult();
+            ->getResult();
     }
 }

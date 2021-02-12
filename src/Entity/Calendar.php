@@ -47,12 +47,9 @@ class Calendar
     private string $calendarId;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     */
-    private string $accessToken;
-
-    /**
      * @ORM\OneToMany(targetEntity=Event::class, mappedBy="calendar", orphanRemoval=true)
+     *
+     * @var Collection<int, Event>
      */
     private Collection $events;
 
@@ -63,15 +60,16 @@ class Calendar
 
     /**
      * @ORM\Column(type="json", nullable=true)
+     *
+     * @var array<string, ?string>
      */
     private array $metaData = [];
 
-    public function __construct(string $calendarId, string $calendarName, string $accessToken, string $refreshToken)
+    public function __construct(string $calendarId, string $calendarName, string $refreshToken)
     {
         $this->events = new ArrayCollection();
         $this->calendarId = $calendarId;
         $this->name = $calendarName;
-        $this->accessToken = $accessToken;
         $this->refreshToken = $refreshToken;
         $this->lastSyncDate = new \DateTime();
         $this->isShow = true;
@@ -106,7 +104,7 @@ class Calendar
         return $this;
     }
 
-    public function getIsShow(): ?bool
+    public function getIsShow(): bool
     {
         return $this->isShow;
     }
@@ -118,7 +116,7 @@ class Calendar
         return $this;
     }
 
-    public function getCalendarId(): ?string
+    public function getCalendarId(): string
     {
         return $this->calendarId;
     }
@@ -130,20 +128,8 @@ class Calendar
         return $this;
     }
 
-    public function getAccessToken(): ?string
-    {
-        return $this->accessToken;
-    }
-
-    public function setAccessToken(string $accessToken): self
-    {
-        $this->accessToken = $accessToken;
-
-        return $this;
-    }
-
     /**
-     * @return Collection|Event[]
+     * @return Collection<int, Event>
      */
     public function getEvents(): Collection
     {
@@ -184,14 +170,32 @@ class Calendar
         return $this;
     }
 
+    /**
+     * @return array<string, ?string>|null
+     */
     public function getMetaData(): ?array
     {
         return $this->metaData;
     }
 
+    /**
+     * @param array<string, ?string> $metaData
+     */
     public function setMetaData(array $metaData): self
     {
         $this->metaData = $metaData;
+
+        return $this;
+    }
+
+    /**
+     * @param array<string, ?string> $newValues
+     */
+    public function fillMetaData(array $newValues): self
+    {
+        foreach ($newValues as $key => $value) {
+            $this->metaData[$key] = $value;
+        }
 
         return $this;
     }

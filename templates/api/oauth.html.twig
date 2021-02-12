@@ -10,12 +10,8 @@
 <h2>Please wait...</h2>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const tokens = {
-            accessToken: '{{ tokens.accessToken }}',
-            refreshToken: '{{ tokens.refreshToken }}',
-        }
         if (window.opener) {
-            window.opener.postMessage(tokens)
+            window.opener.postMessage("")
         }
         window.close()
     });

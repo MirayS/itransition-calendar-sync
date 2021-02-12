@@ -2,7 +2,8 @@
 
 namespace App\Command;
 
-use App\Service\CalendarService;
+use App\Service\CalendarEntityService;
+use App\Service\GoogleService\GoogleCalendarEventsParser;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -12,12 +13,15 @@ class SyncCalendarsCommand extends Command
 {
     protected static $defaultName = 'app:sync-calendars';
 
-    private CalendarService $calendarService;
+    private CalendarEntityService $calendarService;
 
-    public function __construct(CalendarService $calendarService, string $name = null)
+    private GoogleCalendarEventsParser $googleCalendarEventsParser;
+
+    public function __construct(CalendarEntityService $calendarService, GoogleCalendarEventsParser $googleCalendarEventsParser, string $name = null)
     {
         parent::__construct($name);
         $this->calendarService = $calendarService;
+        $this->googleCalendarEventsParser = $googleCalendarEventsParser;
     }
 
     protected function configure(): void
@@ -31,7 +35,10 @@ class SyncCalendarsCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $this->calendarService->syncAllCalendars();
+        $calendars = $this->calendarService->getAllCalendars();
+        foreach ($calendars as $calendar) {
+            $this->googleCalendarEventsParser->parseEvents($calendar);
+        }
 
         $io->success('Calendars successful synced');
 

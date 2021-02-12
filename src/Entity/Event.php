@@ -58,6 +58,7 @@ class Event
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"show_calendar", "list_event"})
      */
     private string $description;
 
