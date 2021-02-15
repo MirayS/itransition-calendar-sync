@@ -7,7 +7,6 @@ namespace App\Service;
 use App\Entity\Calendar;
 use App\Repository\CalendarRepository;
 use App\Repository\EventRepository;
-use App\Service\GoogleService\GoogleCalendarEventsParser;
 use Doctrine\ORM\EntityManagerInterface;
 
 class CalendarEntityService
