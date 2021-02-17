@@ -39,7 +39,7 @@ class GoogleCalendarEventsParser
 
             $nextPageToken = $result->getNextPageToken();
         }
-        $nextSyncToken = null == $result ? null : $result->getNextSyncToken();
+        $nextSyncToken = $result->getNextSyncToken();
         $calendar->fillMetaData([
             self::META_LAST_SYNC_TOKEN => $nextSyncToken,
         ]);

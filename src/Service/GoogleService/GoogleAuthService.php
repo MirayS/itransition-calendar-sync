@@ -8,30 +8,30 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class GoogleAuthService
 {
-    private GoogleClientService $googleClientService;
+    private \Google_Client $googleClient;
 
-    public function __construct(GoogleClientService $googleClientService, UrlGeneratorInterface $router)
+    public function __construct(\Google_Client $googleClient, UrlGeneratorInterface $router)
     {
-        $this->googleClientService = $googleClientService;
 
-        $googleClient = $this->googleClientService->getGoogleClient();
         $googleClient->addScope(\Google_Service_Calendar::CALENDAR_READONLY);
         $googleClient->addScope(\Google_Service_Calendar::CALENDAR_EVENTS_READONLY);
         $googleClient->setAccessType('offline');
         $googleClient->setPrompt('consent');
         $googleClient->setIncludeGrantedScopes(true);
         $googleClient->setRedirectUri($router->generate('api.google.auth', [], UrlGeneratorInterface::ABSOLUTE_URL));
+
+        $this->googleClient = $googleClient;
     }
 
     public function getAuthUrl(): string
     {
-        return $this->googleClientService->getGoogleClient()->createAuthUrl();
+        return $this->googleClient->createAuthUrl();
     }
 
     public function getRefreshToken(string $authCode): ?string
     {
-        $this->googleClientService->getGoogleClient()->fetchAccessTokenWithAuthCode($authCode);
+        $this->googleClient->fetchAccessTokenWithAuthCode($authCode);
 
-        return $this->googleClientService->getGoogleClient()->getRefreshToken();
+        return $this->googleClient->getRefreshToken();
     }
 }
