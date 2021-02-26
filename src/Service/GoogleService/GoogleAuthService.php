@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Service\GoogleService;
 
+use App\Service\AuthServiceInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
-class GoogleAuthService
+class GoogleAuthService implements AuthServiceInterface
 {
     private \Google_Client $googleClient;
 
@@ -28,10 +29,17 @@ class GoogleAuthService
         return $this->googleClient->createAuthUrl();
     }
 
-    public function getRefreshToken(string $authCode): ?string
+    public function getRefreshToken(string $authCode): string
     {
         $this->googleClient->fetchAccessTokenWithAuthCode($authCode);
 
         return $this->googleClient->getRefreshToken();
+    }
+
+    public function getAccessToken(string $refreshToken): string
+    {
+        $this->googleClient->fetchAccessTokenWithRefreshToken($refreshToken);
+
+        return $this->googleClient->getAccessToken()['access_token'];
     }
 }
