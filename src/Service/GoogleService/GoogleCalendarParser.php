@@ -6,7 +6,6 @@ namespace App\Service\GoogleService;
 
 use App\Entity\Calendar;
 use App\Service\CalendarParserInterface;
-use App\Service\GoogleService\Model\GoogleCalendar;
 
 class GoogleCalendarParser implements CalendarParserInterface
 {

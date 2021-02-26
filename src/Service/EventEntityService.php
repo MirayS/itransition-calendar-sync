@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Entity\Calendar;
 use App\Entity\Event;
 use App\Repository\EventRepository;
+use App\Service\Model\ParsedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 
 class EventEntityService
@@ -63,6 +64,37 @@ class EventEntityService
 
     public function saveChanges(): void
     {
+        $this->entityManager->flush();
+    }
+
+    /**
+     * @param ParsedEvent[] $parsedEvents
+     */
+    public function loadParsedEvents(array $parsedEvents, Calendar $calendar): void
+    {
+        foreach ($parsedEvents as $parsedEvent) {
+            $eventModel = $this->eventRepository->findOneBy(['eventId' => $parsedEvent->getId()]);
+            if ($parsedEvent->isRemoved()) {
+                if (null != $eventModel) {
+                    $this->entityManager->remove($eventModel);
+                }
+            } else {
+                if (null == $eventModel) {
+                    $eventModel = new Event($parsedEvent->getName() ?? '',
+                        $parsedEvent->getId() ?? '',
+                        $calendar, $parsedEvent->getStartTime() ?? new \DateTimeImmutable(),
+                        $parsedEvent->getEndTime() ?? new \DateTimeImmutable(),
+                        $parsedEvent->isAllDay() ?? false);
+                } else {
+                    $eventModel->setStartTime($parsedEvent->getStartTime() ?? new \DateTimeImmutable());
+                    $eventModel->setEndTime($parsedEvent->getEndTime());
+                    $eventModel->setIsAllDay($parsedEvent->isAllDay() ?? false);
+                    $eventModel->setName($parsedEvent->getName() ?? '');
+                    $eventModel->setDescription($parsedEvent->getDescription() ?? '');
+                }
+                $this->entityManager->persist($eventModel);
+            }
+        }
         $this->entityManager->flush();
     }
 }

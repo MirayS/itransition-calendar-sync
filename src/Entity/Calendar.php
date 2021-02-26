@@ -55,7 +55,7 @@ class Calendar
     private Collection $events;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=1000)
      */
     private string $refreshToken;
 
@@ -66,7 +66,12 @@ class Calendar
      */
     private array $metaData = [];
 
-    public function __construct(string $calendarId, string $calendarName, string $refreshToken = '')
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private string $calendarType;
+
+    public function __construct(string $calendarId, string $calendarName, string $refreshToken = '', string $calendarType = '')
     {
         $this->events = new ArrayCollection();
         $this->calendarId = $calendarId;
@@ -74,6 +79,7 @@ class Calendar
         $this->refreshToken = $refreshToken;
         $this->lastSyncDate = new \DateTime();
         $this->isShow = true;
+        $this->calendarType = $calendarType;
     }
 
     public function getId(): ?int
@@ -105,70 +111,34 @@ class Calendar
         return $this;
     }
 
-    public function getIsShow(): bool
+    public function isShow(): bool
     {
         return $this->isShow;
     }
 
-    public function setIsShow(bool $isShow): self
+    public function hide(): self
     {
-        $this->isShow = $isShow;
+        $this->isShow = false;
 
         return $this;
     }
+
+    public function show(): self
+    {
+        $this->isShow = true;
+
+        return $this;
+    }
+
 
     public function getCalendarId(): string
     {
         return $this->calendarId;
     }
 
-    public function setCalendarId(string $calendarId): self
-    {
-        $this->calendarId = $calendarId;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Event>
-     */
-    public function getEvents(): Collection
-    {
-        return $this->events;
-    }
-
-    public function addEvent(Event $event): self
-    {
-        if (!$this->events->contains($event)) {
-            $this->events[] = $event;
-            $event->setCalendar($this);
-        }
-
-        return $this;
-    }
-
-    public function removeEvent(Event $event): self
-    {
-        if ($this->events->removeElement($event)) {
-            // set the owning side to null (unless already changed)
-            if ($event->getCalendar() === $this) {
-                $event->setCalendar(null);
-            }
-        }
-
-        return $this;
-    }
-
     public function getRefreshToken(): ?string
     {
         return $this->refreshToken;
-    }
-
-    public function setRefreshToken(string $refreshToken): self
-    {
-        $this->refreshToken = $refreshToken;
-
-        return $this;
     }
 
     /**
@@ -177,16 +147,6 @@ class Calendar
     public function getMetaData(): ?array
     {
         return $this->metaData;
-    }
-
-    /**
-     * @param array<string, ?string> $metaData
-     */
-    public function setMetaData(array $metaData): self
-    {
-        $this->metaData = $metaData;
-
-        return $this;
     }
 
     /**
@@ -199,5 +159,13 @@ class Calendar
         }
 
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCalendarType(): string
+    {
+        return $this->calendarType;
     }
 }

@@ -6,7 +6,7 @@ namespace App\Service;
 
 use App\Service\Model\EventsParserResult;
 
-interface CalendarEventsParser
+interface CalendarEventsParserInterface
 {
     public function parseEvents(string $refreshToken, string $calendarId, ?string $lastSyncToken = null): EventsParserResult;
 }

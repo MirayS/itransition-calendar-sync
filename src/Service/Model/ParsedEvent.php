@@ -61,7 +61,7 @@ class ParsedEvent
         return $this->endTime;
     }
 
-    public function getIsAllDay(): ?bool
+    public function isAllDay(): ?bool
     {
         return $this->isAllDay;
     }

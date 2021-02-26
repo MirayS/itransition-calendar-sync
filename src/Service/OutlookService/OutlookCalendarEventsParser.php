@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Service\OutlookService;
 
-use App\Service\CalendarEventsParser;
+use App\Service\CalendarEventsParserInterface;
 use App\Service\Model\EventsParserResult;
 use App\Service\Model\ParsedEvent;
 use Microsoft\Graph\Http\GraphResponse;
 use Microsoft\Graph\Model\DateTimeTimeZone;
 use Microsoft\Graph\Model\Event;
 
-class OutlookCalendarEventsParser implements CalendarEventsParser
+class OutlookCalendarEventsParser implements CalendarEventsParserInterface
 {
     private OutlookClientService $clientService;
 

@@ -4,50 +4,39 @@ declare(strict_types=1);
 
 namespace App\Service\GoogleService;
 
-use App\Entity\Calendar;
-use App\Service\CalendarEntityService;
-use App\Service\EventEntityService;
+use App\Service\CalendarEventsParserInterface;
+use App\Service\Model\EventsParserResult;
+use App\Service\Model\ParsedEvent;
 
-class GoogleCalendarEventsParser
+class GoogleCalendarEventsParser implements CalendarEventsParserInterface
 {
     private const CANCEL_STATUS = 'cancelled';
-    private const META_LAST_SYNC_TOKEN = 'lastSyncToken';
 
     private GoogleClientService $googleClientService;
-    private CalendarEntityService $calendarService;
-    private GoogleNotificationService $googleNotificationService;
-    private EventEntityService $eventService;
 
-    public function __construct(GoogleClientService $googleClientService, CalendarEntityService $calendarService, GoogleNotificationService $googleNotificationService, EventEntityService $eventService)
+    public function __construct(GoogleClientService $googleClientService)
     {
         $this->googleClientService = $googleClientService;
-        $this->calendarService = $calendarService;
-        $this->googleNotificationService = $googleNotificationService;
-        $this->eventService = $eventService;
     }
 
-    public function parseEvents(Calendar $calendar): void
+    public function parseEvents(string $refreshToken, string $calendarId, ?string $syncToken = null): EventsParserResult
     {
-        $this->googleClientService->loadAccessToken($calendar->getRefreshToken());
+        $this->googleClientService->loadAccessToken($refreshToken);
         $nextPageToken = '';
-        $result = null;
-        while (null == $result || null == $result->getNextSyncToken()) {
-            $result = $this->getEvents($calendar->getCalendarId(), $nextPageToken, isset($calendar->getMetaData()[self::META_LAST_SYNC_TOKEN]) ? $calendar->getMetaData()[self::META_LAST_SYNC_TOKEN] : '');
-            foreach ($result->getItems() as $event) {
-                $this->parseEvent($calendar, $event);
+        $requestResult = null;
+        $parsedEvents = [];
+        while (true) {
+            $requestResult = $this->getEvents($calendarId, $nextPageToken, $syncToken ?? '');
+            $parsedEvents = array_merge($parsedEvents, $this->parseEventsFromObject($requestResult->getItems()));
+
+            if (null != $requestResult->getNextSyncToken()) {
+                break;
             }
 
-            $nextPageToken = $result->getNextPageToken();
+            $nextPageToken = $requestResult->getNextPageToken();
         }
-        $nextSyncToken = $result->getNextSyncToken();
-        $calendar->fillMetaData([
-            self::META_LAST_SYNC_TOKEN => $nextSyncToken,
-        ]);
 
-        $this->eventService->saveChanges();
-        $this->googleNotificationService->checkNotificationSubscribe($calendar);
-        $calendar->setLastSyncDate(new \DateTime('now'));
-        $this->calendarService->updateCalendar($calendar);
+        return new EventsParserResult($requestResult->getNextSyncToken(), $parsedEvents);
     }
 
     private function getEvents(string $calendarId, ?string $pageToken, ?string $lastSyncToken): \Google_Service_Calendar_Events
@@ -65,33 +54,42 @@ class GoogleCalendarEventsParser
         return $googleCalendarService->events->listEvents($calendarId, $params);
     }
 
-    private function parseEvent(Calendar $calendar, \Google_Service_Calendar_Event $googleEvent): void
+    /**
+     * @param \Google_Service_Calendar_Event[] $eventsObject
+     *
+     * @return ParsedEvent[]
+     */
+    private function parseEventsFromObject(array $eventsObject): array
     {
-        $eventModel = $this->eventService->getOrCreateEvent($googleEvent->getId(),
-            $calendar,
-            $googleEvent->getSummary() ?? '',
-            $this->getEventDateTime($googleEvent->getStart()),
-            $this->getEventDateTime($googleEvent->getEnd()),
-            $this->isAllDayEvent($googleEvent),
-            $googleEvent->getDescription() ?? ''
-        );
-        if (self::CANCEL_STATUS == $googleEvent->getStatus()) {
-            $this->eventService->removeEvent($eventModel, false);
-        } else {
-            $this->eventService->updateEvent($eventModel, false);
+        $events = [];
+        foreach ($eventsObject as $eventObject) {
+            $events[] = new ParsedEvent(
+                $eventObject->getId(),
+                self::CANCEL_STATUS == $eventObject->getStatus(),
+                $eventObject->getSummary(),
+                $eventObject->getDescription(),
+                $this->getEventDateTime($eventObject->getStart()),
+                $this->getEventDateTime($eventObject->getEnd()),
+                $this->isAllDayEvent($eventObject)
+            );
         }
+
+        return $events;
     }
 
-    private function getEventDateTime(?\Google_Service_Calendar_EventDateTime $eventDateTime): \DateTime
+    private function getEventDateTime(?\Google_Service_Calendar_EventDateTime $eventDateTime): ?\DateTimeImmutable
     {
         if (null == $eventDateTime) {
-            return new \DateTime('now');
-        }
-        if (null == $eventDateTime->getDateTime()) {
-            return new \DateTime($eventDateTime->getDate());
+            return null;
         }
 
-        return new \DateTime($eventDateTime->getDateTime());
+        $timeZone = $eventDateTime->getTimeZone() ?? 'UTC';
+        $timeZoneObject = new \DateTimeZone($timeZone);
+        if (null == $eventDateTime->getDateTime()) {
+            return new \DateTimeImmutable($eventDateTime->getDate(), $timeZoneObject);
+        }
+
+        return new \DateTimeImmutable($eventDateTime->getDateTime(), $timeZoneObject);
     }
 
     private function isAllDayEvent(\Google_Service_Calendar_Event $googleEvent): bool

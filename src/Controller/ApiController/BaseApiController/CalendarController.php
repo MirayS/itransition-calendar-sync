@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\ApiController\BaseApiController;
 
 use App\Service\CalendarEntityService;
-use App\Service\GoogleService\GoogleCalendarEventsParser;
+use App\Service\CalendarSynchronizationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -42,11 +42,11 @@ class CalendarController extends AbstractController
     /**
      * @Route("/api/calendars/sync", name="api.calendars.sync")
      */
-    public function syncAllCalendars(CalendarEntityService $calendarService, GoogleCalendarEventsParser $googleCalendarEventsParser): Response
+    public function syncAllCalendars(CalendarEntityService $calendarService, CalendarSynchronizationService $calendarSynchronizationService): Response
     {
         try {
             foreach ($calendarService->getAllCalendars() as $calendar) {
-                $googleCalendarEventsParser->parseEvents($calendar);
+                $calendarSynchronizationService->syncCalendar($calendar);
             }
 
             return $this->json(null);
@@ -58,7 +58,7 @@ class CalendarController extends AbstractController
     /**
      * @Route("/api/calendars/{id}/sync", name="api.calendar.sync")
      */
-    public function syncCalendar(CalendarEntityService $calendarService, GoogleCalendarEventsParser $googleCalendarEventsParser, int $id): Response
+    public function syncCalendar(CalendarEntityService $calendarService, CalendarSynchronizationService $calendarSynchronizationService, int $id): Response
     {
         try {
             $calendar = $calendarService->getCalendar($id);
@@ -66,7 +66,7 @@ class CalendarController extends AbstractController
                 throw $this->createNotFoundException();
             }
 
-            $googleCalendarEventsParser->parseEvents($calendar);
+            $calendarSynchronizationService->syncCalendar($calendar);
 
             return $this->json(null);
         } catch (\Exception $exception) {
@@ -84,7 +84,12 @@ class CalendarController extends AbstractController
             throw $this->createNotFoundException();
         }
 
-        $calendar->setIsShow(!$calendar->getIsShow());
+        if ($calendar->isShow()) {
+            $calendar->hide();
+        } else {
+            $calendar->show();
+        }
+
         $calendarService->updateCalendar($calendar);
 
         $result = $serializer->serialize(

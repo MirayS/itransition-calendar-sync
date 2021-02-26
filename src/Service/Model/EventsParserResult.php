@@ -6,13 +6,16 @@ namespace App\Service\Model;
 
 class EventsParserResult
 {
-    private string $nextSyncToken;
+    private ?string $nextSyncToken;
+    /**
+     * @var ParsedEvent[]
+     */
     private array $parsedEvents;
 
     /**
      * @param ParsedEvent[] $parsedEvents
      */
-    public function __construct(string $nextSyncToken, array $parsedEvents)
+    public function __construct(?string $nextSyncToken, array $parsedEvents)
     {
         $this->nextSyncToken = $nextSyncToken;
         $this->parsedEvents = $parsedEvents;
@@ -26,7 +29,7 @@ class EventsParserResult
         return $this->parsedEvents;
     }
 
-    public function getNextSyncToken(): string
+    public function getNextSyncToken(): ?string
     {
         return $this->nextSyncToken;
     }
