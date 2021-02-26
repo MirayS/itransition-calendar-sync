@@ -180,6 +180,9 @@
     "league/uri-parser": {
         "version": "1.4.1"
     },
+    "microsoft/microsoft-graph": {
+        "version": "1.27.0"
+    },
     "monolog/monolog": {
         "version": "2.2.0"
     },

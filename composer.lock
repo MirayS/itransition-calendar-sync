@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3327f8302f39f90a40c9ec9cbfeed4f9",
+    "content-hash": "50c7d9cf2e6c79ad388c58a1f6932ca3",
     "packages": [
         {
             "name": "amphp/amp",
@@ -3383,6 +3383,55 @@
                 "url"
             ],
             "time": "2018-11-22T07:55:51+00:00"
+        },
+        {
+            "name": "microsoft/microsoft-graph",
+            "version": "1.27.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/microsoftgraph/msgraph-sdk-php.git",
+                "reference": "2be074ec4bd26a38e5bb03577edcbe054abd8d09"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/microsoftgraph/msgraph-sdk-php/zipball/2be074ec4bd26a38e5bb03577edcbe054abd8d09",
+                "reference": "2be074ec4bd26a38e5bb03577edcbe054abd8d09",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^6.0 || ^7.0",
+                "php": "^8.0 || ^7.1"
+            },
+            "require-dev": {
+                "mikey179/vfsstream": "^1.2",
+                "phpunit/phpunit": "^7.5 || ^8.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Beta\\Microsoft\\Graph\\": "src/Beta/Microsoft/Graph/",
+                    "Microsoft\\Graph\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Microsoft Graph Client Tooling",
+                    "email": "graphtooling@service.microsoft.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "The Microsoft Graph SDK for PHP",
+            "homepage": "https://developer.microsoft.com/en-us/graph",
+            "support": {
+                "issues": "https://github.com/microsoftgraph/msgraph-sdk-php/issues",
+                "source": "https://github.com/microsoftgraph/msgraph-sdk-php/tree/1.27.0"
+            },
+            "time": "2021-02-19T04:26:27+00:00"
         },
         {
             "name": "monolog/monolog",
