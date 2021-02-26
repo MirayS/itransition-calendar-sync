@@ -8,6 +8,8 @@ class GoogleClientService
 {
     private \Google_Client $googleClient;
 
+    private \Google_Service_Calendar $googleCalendarService;
+
     public function __construct(\Google_Client $googleClient)
     {
         $this->googleClient = $googleClient;
@@ -20,7 +22,11 @@ class GoogleClientService
 
     public function getGoogleCalendarClient(): \Google_Service_Calendar
     {
-        return new \Google_Service_Calendar($this->googleClient);
+        if (!isset($this->googleCalendarService)) {
+            $this->googleCalendarService = new \Google_Service_Calendar($this->googleClient);
+        }
+
+        return $this->googleCalendarService;
     }
 
     public function loadAccessToken(?string $refreshToken): void
