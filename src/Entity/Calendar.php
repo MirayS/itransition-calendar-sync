@@ -19,30 +19,31 @@ class Calendar
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
-     * @Groups({"show_calendar", "list_calendar"})
+     * @Groups({"list_calendar"})
      */
     private ?int $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"show_calendar", "list_calendar"})
+     * @Groups({"parse_calendar", "list_calendar"})
      */
     private string $name;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Groups({"show_calendar", "list_calendar"})
+     * @Groups({"list_calendar"})
      */
     private \DateTimeInterface $lastSyncDate;
 
     /**
      * @ORM\Column(type="boolean")
-     * @Groups({"show_calendar", "list_calendar"})
+     * @Groups({"list_calendar"})
      */
     private bool $isShow;
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Groups({"parse_calendar"})
      */
     private string $calendarId;
 
@@ -65,7 +66,7 @@ class Calendar
      */
     private array $metaData = [];
 
-    public function __construct(string $calendarId, string $calendarName, string $refreshToken)
+    public function __construct(string $calendarId, string $calendarName, string $refreshToken = '')
     {
         $this->events = new ArrayCollection();
         $this->calendarId = $calendarId;
