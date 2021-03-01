@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\ApiController\OutlookApiController;
 
 use App\Service\CalendarEntityService;
+use App\Service\CalendarSynchronizationService;
 use App\Service\OutlookService\OutlookNotificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,14 +18,17 @@ class OutlookNotificationController extends AbstractController
 
     private CalendarEntityService $calendarEntityService;
 
-    public function __construct(OutlookNotificationService $outlookNotificationService, CalendarEntityService $calendarEntityService)
+    private CalendarSynchronizationService $calendarSynchronizationService;
+
+    public function __construct(OutlookNotificationService $outlookNotificationService, CalendarEntityService $calendarEntityService, CalendarSynchronizationService $calendarSynchronizationService)
     {
         $this->outlookNotificationService = $outlookNotificationService;
         $this->calendarEntityService = $calendarEntityService;
+        $this->calendarSynchronizationService = $calendarSynchronizationService;
     }
 
     /**
-     * @Route("/api/outlook/notification", name="api.outlook.notification")
+     * @Route("/api/outlook/notification", name="api.outlook.notification", methods={"POST"})
      */
     public function notificationEndpoint(Request $request): Response
     {
@@ -33,6 +37,17 @@ class OutlookNotificationController extends AbstractController
             return new Response($request->get('validationToken'));
         }
 
-        return new Response('');
+        $requestBody = json_decode($request->getContent(), true);
+        $value = $requestBody['value'][0];
+        $subscriptionId = $value['subscriptionId'];
+
+        $calendar = $this->calendarEntityService->getCalendarByNotificationId($subscriptionId);
+        if (null == $calendar) {
+            return new Response();
+        }
+
+        $this->calendarSynchronizationService->syncCalendar($calendar);
+
+        return new Response($subscriptionId);
     }
 }

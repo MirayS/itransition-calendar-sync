@@ -5,93 +5,77 @@ declare(strict_types=1);
 namespace App\Service\GoogleService;
 
 use App\Entity\Calendar;
-use App\Service\CalendarEntityService;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\EventNotificationSubscriberInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Uid\Uuid;
 
-class GoogleNotificationService
+class GoogleNotificationService implements EventNotificationSubscriberInterface
 {
-    private const META_NOTIFICATION_ID = 'notificationId';
-    private const META_NOTIFICATION_EXPIRATION = 'notificationExpirationDate';
     private const META_NOTIFICATION_RESOURCE = 'notificationResourceId';
 
     private UrlGeneratorInterface $urlGenerator;
-    private EntityManagerInterface $entityManager;
     private GoogleClientService $googleClientService;
 
-    private CalendarEntityService $calendarService;
-
-    public function __construct(GoogleClientService $googleClientService, UrlGeneratorInterface $urlGenerator, EntityManagerInterface $entityManager, CalendarEntityService $calendarService)
+    public function __construct(GoogleClientService $googleClientService, UrlGeneratorInterface $urlGenerator)
     {
         $this->urlGenerator = $urlGenerator;
-        $this->entityManager = $entityManager;
         $this->googleClientService = $googleClientService;
-        $this->calendarService = $calendarService;
     }
 
-    public function startReceiveNotification(Calendar $calendar): void
+    public function subscribe(string $refreshToken, string $calendarId): array
     {
-        $metaData = $calendar->getMetaData();
-        if (isset($metaData, $metaData[self::META_NOTIFICATION_EXPIRATION], $metaData[self::META_NOTIFICATION_RESOURCE], $metaData[self::META_NOTIFICATION_ID]) && new \DateTime($metaData[self::META_NOTIFICATION_EXPIRATION]) >= new \DateTime('now')) {
-            $this->stopReceiveNotification($calendar);
-        }
-
-        $this->googleClientService->loadAccessToken($calendar->getRefreshToken());
+        $this->googleClientService->loadAccessToken($refreshToken);
         $googleCalendarService = $this->googleClientService->getGoogleCalendarClient();
         $requestModel = $this->getRequestModel();
-        $result = $googleCalendarService->events->watch($calendar->getCalendarId(), $requestModel);
-        $this->fillMetaData($calendar, $result->getId(), date('Y-m-d H:i:s', $result->getExpiration() / 1000), $result->getResourceId());
-        $this->calendarService->updateCalendar($calendar);
+        $result = $googleCalendarService->events->watch($calendarId, $requestModel);
+
+        return $this->getMetaData($result->getId(), date(\DateTimeImmutable::RFC3339_EXTENDED, $result->getExpiration() / 1000), $result->getResourceId());
     }
 
-    public function stopReceiveNotification(Calendar $calendar): void
+    public function cancelSubscription(string $refreshToken, string $calendarId, array $metaData): array
     {
-        $metaData = $calendar->getMetaData();
-        if (!isset($metaData, $metaData[self::META_NOTIFICATION_RESOURCE], $metaData[self::META_NOTIFICATION_ID], $metaData[self::META_NOTIFICATION_EXPIRATION])) {
-            return;
+        if (isset($metaData[self::META_NOTIFICATION_RESOURCE], $metaData[Calendar::SUBSCRIPTION_ID_META], $metaData[Calendar::SUBSCRIPTION_EXPIRATION_META])) {
+            $this->googleClientService->loadAccessToken($refreshToken);
+            $googleCalendarService = $this->googleClientService->getGoogleCalendarClient();
+            $requestModel = $this->getRequestModel($metaData[Calendar::SUBSCRIPTION_ID_META], $metaData[self::META_NOTIFICATION_RESOURCE]);
+            $googleCalendarService->channels->stop($requestModel);
         }
 
-        $this->googleClientService->loadAccessToken($calendar->getRefreshToken());
-        $googleCalendarService = $this->googleClientService->getGoogleCalendarClient();
-        $requestModel = $this->getRequestModel($calendar);
-        $googleCalendarService->channels->stop($requestModel);
-        $this->fillMetaData($calendar);
-        $this->calendarService->updateCalendar($calendar);
+        return $this->getMetaData();
     }
 
-    public function checkNotificationSubscribe(Calendar $calendar): void
+    public function updateSubscription(string $refreshToken, string $calendarId, array $metaData): array
     {
-        $metaData = $calendar->getMetaData();
-        if (isset($metaData[self::META_NOTIFICATION_EXPIRATION], $metaData[self::META_NOTIFICATION_ID], $metaData[self::META_NOTIFICATION_RESOURCE]) && new \DateTime($metaData[self::META_NOTIFICATION_EXPIRATION]) < new \DateTime('now')) {
-            $this->startReceiveNotification($calendar);
-        }
+        $this->cancelSubscription($refreshToken, $calendarId, $metaData);
+
+        return $this->subscribe($refreshToken, $calendarId);
     }
 
-    private function getRequestModel(?Calendar $calendar = null): \Google_Service_Calendar_Channel
+    /**
+     * @return null[]|string[]
+     */
+    private function getMetaData(?string $notificationId = null, ?string $expirationDate = null, ?string $resourceId = null): array
+    {
+        return [
+            Calendar::SUBSCRIPTION_ID_META => $notificationId,
+            Calendar::SUBSCRIPTION_EXPIRATION_META => $expirationDate,
+            self::META_NOTIFICATION_RESOURCE => $resourceId,
+        ];
+    }
+
+    private function getRequestModel(?string $subscriptionId = null, ?string $subscriptionResource = null): \Google_Service_Calendar_Channel
     {
         $params = new \Google_Service_Calendar_Channel();
         $params->setAddress($this->urlGenerator->generate('api.google.notification', [], UrlGeneratorInterface::ABSOLUTE_URL));
         $params->setType('web_hook');
 
-        $metaData = null == $calendar ? null : $calendar->getMetaData();
-
-        if (null != $metaData && isset($metaData[self::META_NOTIFICATION_ID], $metaData[self::META_NOTIFICATION_RESOURCE])) {
-            $params->setId($metaData[self::META_NOTIFICATION_ID]);
-            $params->setResourceId($metaData[self::META_NOTIFICATION_RESOURCE]);
+        if (null != $subscriptionId && null != $subscriptionResource) {
+            $params->setId($subscriptionId);
+            $params->setResourceId($subscriptionResource);
         } else {
             $params->setId(Uuid::v4()->toRfc4122());
         }
 
         return $params;
-    }
-
-    private function fillMetaData(Calendar $calendar, ?string $notificationId = null, ?string $expirationDate = null, ?string $resourceId = null): void
-    {
-        $calendar->fillMetaData([
-            self::META_NOTIFICATION_ID => $notificationId,
-            self::META_NOTIFICATION_EXPIRATION => $expirationDate,
-            self::META_NOTIFICATION_RESOURCE => $resourceId,
-        ]);
     }
 }

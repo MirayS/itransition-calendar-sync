@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Calendar;
+use App\Service\GoogleService\GoogleNotificationService;
 use App\Service\OutlookService\OutlookNotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -14,10 +15,13 @@ class CalendarNotificationService
 
     private EntityManagerInterface $entityManager;
 
-    public function __construct(OutlookNotificationService $outlookNotificationService, EntityManagerInterface $entityManager)
+    private GoogleNotificationService $googleNotificationService;
+
+    public function __construct(OutlookNotificationService $outlookNotificationService, EntityManagerInterface $entityManager, GoogleNotificationService $googleNotificationService)
     {
         $this->outlookNotificationService = $outlookNotificationService;
         $this->entityManager = $entityManager;
+        $this->googleNotificationService = $googleNotificationService;
     }
 
     public function subscribe(Calendar $calendar): void
@@ -25,6 +29,8 @@ class CalendarNotificationService
         $result = [];
         if ('outlook' == $calendar->getCalendarType()) {
             $result = $this->outlookNotificationService->subscribe($calendar->getRefreshToken(), $calendar->getCalendarId());
+        } else {
+            $result = $this->googleNotificationService->subscribe($calendar->getRefreshToken(), $calendar->getCalendarId());
         }
         $this->updateCalendarMetaData($calendar, $result);
     }
@@ -34,6 +40,8 @@ class CalendarNotificationService
         $result = [];
         if ('outlook' == $calendar->getCalendarType()) {
             $result = $this->outlookNotificationService->updateSubscription($calendar->getRefreshToken(), $calendar->getCalendarId(), $calendar->getMetaData() ?? []);
+        } else {
+            $result = $this->googleNotificationService->updateSubscription($calendar->getRefreshToken(), $calendar->getCalendarId(), $calendar->getMetaData() ?? []);
         }
         $this->updateCalendarMetaData($calendar, $result);
     }
@@ -43,6 +51,8 @@ class CalendarNotificationService
         $result = [];
         if ('outlook' == $calendar->getCalendarType()) {
             $result = $this->outlookNotificationService->cancelSubscription($calendar->getRefreshToken(), $calendar->getCalendarId(), $calendar->getMetaData() ?? []);
+        } else {
+            $result = $this->googleNotificationService->cancelSubscription($calendar->getRefreshToken(), $calendar->getCalendarId(), $calendar->getMetaData() ?? []);
         }
         $this->updateCalendarMetaData($calendar, $result);
     }
