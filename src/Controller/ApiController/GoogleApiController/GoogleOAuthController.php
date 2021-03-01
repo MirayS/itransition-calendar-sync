@@ -36,6 +36,7 @@ class GoogleOAuthController extends AbstractController
         }
 
         $session->set('refreshToken', $refreshToken);
+        $session->set('type', 'google');
 
         return $this->render('api/oauth.html.twig');
     }

@@ -15,6 +15,10 @@ use Symfony\Component\Serializer\Annotation\Groups;
  */
 class Calendar
 {
+    public const SUBSCRIPTION_ID_META = 'subscriptionId';
+    public const SUBSCRIPTION_EXPIRATION_META = 'subscriptionExpiration';
+    public const SYNC_TOKEN_META = 'syncToken';
+
     /**
      * @ORM\Id
      * @ORM\GeneratedValue
@@ -136,9 +140,9 @@ class Calendar
         return $this->calendarId;
     }
 
-    public function getRefreshToken(): ?string
+    public function getRefreshToken(): string
     {
-        return $this->refreshToken;
+        return $this->refreshToken ?? '';
     }
 
     /**

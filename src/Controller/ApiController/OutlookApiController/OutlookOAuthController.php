@@ -36,6 +36,7 @@ class OutlookOAuthController extends AbstractController
         }
 
         $session->set('refreshToken', $refreshToken);
+        $session->set('type', 'outlook');
 
         return $this->render('api/oauth.html.twig');
     }

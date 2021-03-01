@@ -27,7 +27,7 @@ class CalendarRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('t');
 
         return $qb
-            ->where("JSON_VALUE(t.metaData, '$.notificationId') = :channelId")
+            ->where('JSON_VALUE(t.metaData, \'$.'.Calendar::SUBSCRIPTION_ID_META.'\') = :channelId')
             ->setParameter('channelId', $channelId)
             ->getQuery()
             ->getOneOrNullResult();

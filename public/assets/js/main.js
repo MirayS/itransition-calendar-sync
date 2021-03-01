@@ -101,8 +101,8 @@ const getWindowFeatures = () => {
     return `toolbar=no, menubar=no, width=600, height=700, top=${top}, left=${left}`
 }
 
-const getOauthPopup = () => {
-    $.get('/api/google/url', url => {
+const getOauthPopup = (type) => {
+    $.get(`/api/${type}/url`, url => {
         window.removeEventListener('message', oauthResultReceive);
         const strWindowFeatures = getWindowFeatures();
 
@@ -127,11 +127,11 @@ const oauthResultReceive = event => {
 }
 
 const getGoogleCalendars = () => {
-    $.get('/api/google/calendars', result => {
+    $.get(`/api/calendars/parse`, result => {
         let select = $('#selectCalendar')
         select.empty()
         for (let calendar of result) {
-            select.append(`<option value="${calendar.id}">${calendar.name}</option>`)
+            select.append(`<option value="${calendar.calendarId}">${calendar.name}</option>`)
         }
         $('#addCalendarModal').modal()
     })
@@ -140,7 +140,7 @@ const getGoogleCalendars = () => {
 const addNewGoogleCalendar = () => {
     $('#addCalendarModal').modal('hide')
     let selectedCalendar = $('#selectCalendar option:selected')[0]
-    $.post('/api/google/new', {
+    $.post('/api/calendars/new', {
         'calendarId': $("#selectCalendar").val(),
         'calendarName': selectedCalendar.text
     }, () => {

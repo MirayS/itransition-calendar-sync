@@ -6,9 +6,13 @@ namespace App\Controller\ApiController\BaseApiController;
 
 use App\Service\CalendarEntityService;
 use App\Service\CalendarSynchronizationService;
+use App\Service\GoogleService\GoogleCalendarParser;
+use App\Service\OutlookService\OutlookCalendarParser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -101,5 +105,50 @@ class CalendarController extends AbstractController
         $response->setContentSafe();
 
         return $response;
+    }
+
+    /**
+     * @Route("/api/calendars/parse", name="api.calendars.parse")
+     */
+    public function getCalendars(OutlookCalendarParser $calendarService, GoogleCalendarParser $googleCalendarParser, SessionInterface $session, SerializerInterface $serializer): Response
+    {
+        $refreshToken = $session->get('refreshToken');
+        $type = $session->get('type');
+        if (null == $refreshToken) {
+            throw $this->createNotFoundException();
+        }
+        $result = null;
+        if ('outlook' == $type) {
+            $result = $calendarService->parseCalendars($refreshToken);
+        } else {
+            $result = $googleCalendarParser->parseCalendars($refreshToken);
+        }
+
+        $result = $serializer->serialize(
+            $result,
+            'json',
+            ['groups' => 'parse_calendar']
+        );
+        $response = new JsonResponse($result, 200, [], true);
+        $response->setContentSafe();
+
+        return $response;
+    }
+
+    /**
+     * @Route("/api/calendars/new", name="api.calendars.new")
+     */
+    public function addNewCalendar(CalendarEntityService $calendarService, Request $request, CalendarSynchronizationService $calendarSynchronizationService, SessionInterface $session): Response
+    {
+        $refreshToken = $session->get('refreshToken');
+        $type = $session->get('type') ?? '';
+
+        $calendarId = $request->request->get('calendarId');
+        $calendarName = $request->request->get('calendarName');
+
+        $calendar = $calendarService->getOrCreateCalendar($calendarId, $calendarName, $refreshToken, $type);
+        $calendarSynchronizationService->syncCalendar($calendar);
+
+        return $this->json(null);
     }
 }

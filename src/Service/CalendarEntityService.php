@@ -30,14 +30,13 @@ class CalendarEntityService
         return $this->calendarRepository->findAll();
     }
 
-    public function getOrCreateCalendar(string $calendarId, string $calendarName, string $refreshToken): Calendar
+    public function getOrCreateCalendar(string $calendarId, string $calendarName, string $refreshToken, string $type): Calendar
     {
         $calendar = $this->calendarRepository->findOneBy(['calendarId' => $calendarId]);
         if (null == $calendar) {
-            $calendar = new Calendar($calendarId, $calendarName, $refreshToken);
+            $calendar = new Calendar($calendarId, $calendarName, $refreshToken, $type);
         } else {
             $calendar->setName($calendarName);
-            $calendar->setRefreshToken($refreshToken);
         }
         $this->entityManager->persist($calendar);
         $this->entityManager->flush();

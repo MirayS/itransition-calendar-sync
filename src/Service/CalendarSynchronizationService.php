@@ -30,7 +30,7 @@ class CalendarSynchronizationService
     public function syncCalendar(Calendar $calendar): void
     {
         $result = null;
-        $syncToken = isset($calendar->getMetaData()['syncToken']) ? $calendar->getMetaData()['syncToken'] : null;
+        $syncToken = isset($calendar->getMetaData()[Calendar::SYNC_TOKEN_META]) ? $calendar->getMetaData()[Calendar::SYNC_TOKEN_META] : null;
         $refreshToken = $calendar->getRefreshToken();
 
         if (null == $refreshToken || '' == $refreshToken) {
@@ -46,7 +46,7 @@ class CalendarSynchronizationService
         $this->eventEntityService->loadParsedEvents($result->getParsedEvents(), $calendar);
 
         $calendar->fillMetaData([
-            'syncToken' => $result->getNextSyncToken(),
+            Calendar::SYNC_TOKEN_META => $result->getNextSyncToken(),
         ]);
         $calendar->setLastSyncDate(new \DateTimeImmutable('now'));
 
