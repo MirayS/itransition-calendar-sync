@@ -1,0 +1,18 @@
+.sidepanel {
+    height: 100%;
+    padding: 0.5rem;
+}
+
+.calendar-item {
+    border: 1px solid #ccc !important;
+    border-radius: 1rem;
+    padding: 1.5rem 1rem 0.25rem 2rem;
+    margin-top: 0.5rem;
+}
+
+.sync-date {
+    position: absolute;
+    right: 0.5rem;
+    top: 0.25rem;
+    color: gray;
+}
